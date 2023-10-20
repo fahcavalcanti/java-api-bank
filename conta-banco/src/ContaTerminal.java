@@ -11,9 +11,9 @@ public class ContaTerminal {
         proximoNumeroConta = 1;
     }
 
-    public int criarConta() {
-        int numeroConta = proximoNumeroConta++;
-        ContaBancaria conta = new ContaBancaria();
+    public int criarConta(int numeroConta, String nomeTitular, double depositoInicial) {
+        ContaBancaria conta = new ContaBancaria(numeroConta, nomeTitular);
+        conta.depositar(depositoInicial);
         contas.put(numeroConta, conta);
         return numeroConta;
     }
@@ -27,56 +27,106 @@ public class ContaTerminal {
         }
     }
 
-    public void realizarDeposito(int numeroConta, double valor) {
+    public double realizarDeposito(int numeroConta, double valor) {
         ContaBancaria conta = contas.get(numeroConta);
         if (conta != null) {
             conta.depositar(valor);
+            return conta.getSaldo();
         }
+        return -1; // Falha no depósito
     }
 
-    public boolean realizarSaque(int numeroConta, double valor) {
+    public double realizarSaque(int numeroConta, double valor) {
         ContaBancaria conta = contas.get(numeroConta);
         if (conta != null && conta.getSaldo() >= valor) {
             conta.sacar(valor);
-            return true;
+            return conta.getSaldo();
         }
-        return false; // Falha no saque
+        return -1; // Falha no saque
     }
 
     public static void main(String[] args) {
         ContaTerminal terminal = new ContaTerminal();
         Scanner scanner = new Scanner(System.in);
+        int numeroConta = 0;
+        String nomeTitular = "";
+        boolean contaCriada = false;
 
-        int conta1 = terminal.criarConta();
-        int conta2 = terminal.criarConta();
+        while (true) {
+            System.out.print("Escolha uma opção:\n");
 
-        System.out.print("Digite o valor do depósito para a conta 1: ");
-        double depositoConta1 = scanner.nextDouble();
-        terminal.realizarDeposito(conta1, depositoConta1);
+            if (!contaCriada) {
+                System.out.print("1 - Criar nova conta\n");
+            } else {
+                System.out.print("2 - Realizar depósito\n" +
+                                 "3 - Realizar saque\n" +
+                                 "4 - Verificar saldo\n");
+            }
 
-        System.out.print("Digite o valor do depósito para a conta 2: ");
-        double depositoConta2 = scanner.nextDouble();
-        terminal.realizarDeposito(conta2, depositoConta2);
+            System.out.print("5 - Sair\n" +
+                             "Digite o número da opção desejada: ");
 
-        System.out.print("Digite o valor do saque da conta 1: ");
-        double saqueConta1 = scanner.nextDouble();
-        terminal.realizarSaque(conta1, saqueConta1);
+            int opcao = scanner.nextInt();
 
-        System.out.print("Digite o valor do saque da conta 2: ");
-        double saqueConta2 = scanner.nextDouble();
-        terminal.realizarSaque(conta2, saqueConta2);
+            if (!contaCriada && opcao == 1) {
+                System.out.print("Digite o número da conta: ");
+                numeroConta = scanner.nextInt();
+                scanner.nextLine(); // Consumir a quebra de linha
 
-        System.out.println("Saldo da conta 1: " + terminal.verificarSaldo(conta1));
-        System.out.println("Saldo da conta 2: " + terminal.verificarSaldo(conta2));
+                System.out.print("Digite o nome do titular da conta: ");
+                nomeTitular = scanner.nextLine();
+
+                System.out.print("Digite o valor do depósito inicial: ");
+                double depositoInicial = scanner.nextDouble();
+
+                terminal.criarConta(numeroConta, nomeTitular, depositoInicial);
+                contaCriada = true;
+
+                System.out.println("Conta criada com sucesso!");
+            } else if (contaCriada) {
+                if (opcao == 2) {
+                    System.out.print("Digite o valor do depósito: ");
+                    double deposito = scanner.nextDouble();
+                    double novoSaldo = terminal.realizarDeposito(numeroConta, deposito);
+                    System.out.println("Saldo da conta: " + novoSaldo);
+                } else if (opcao == 3) {
+                    System.out.print("Digite o valor do saque: ");
+                    double saque = scanner.nextDouble();
+                    double novoSaldo = terminal.realizarSaque(numeroConta, saque);
+                    if (novoSaldo == -1) {
+                        System.out.println("Falha no saque: saldo insuficiente.");
+                    } else {
+                        System.out.println("Saldo da conta: " + novoSaldo);
+                    }
+                } else if (opcao == 4) {
+                    double saldo = terminal.verificarSaldo(numeroConta);
+                    if (saldo != -1) {
+                        System.out.println("Saldo da conta: " + saldo);
+                    } else {
+                        System.out.println("Número de conta inválido.");
+                    }
+                } else if (opcao == 5) {
+                    System.out.println("OPERAÇÃO ENCERRADA!");
+                    break; // Encerrar o programa
+                }
+            } else if (opcao == 5) {
+                System.out.println("OPERAÇÃO ENCERRADA!");
+                break; // Encerrar o programa
+            }
+        }
 
         scanner.close();
     }
 }
 
 class ContaBancaria {
+    private int numero;
+    private String nomeTitular;
     private double saldo;
 
-    public ContaBancaria() {
+    public ContaBancaria(int numero, String nomeTitular) {
+        this.numero = numero;
+        this.nomeTitular = nomeTitular;
         this.saldo = 0;
     }
 
